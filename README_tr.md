@@ -213,7 +213,7 @@ Kod tabanı şu dizinlere ayrılmıştır:
 | `app/services` | Graph’ı çalıştırma, sonucu API response modeline map etme                                  |
 | `app/graph`    | LangGraph node’ları, state tanımı, conditional edge’ler                                  |
 | `app/agents`   | Orchestrator, worker, aggregator, evaluator, optimizer çağrıları ve prompt tarafı         |
-| `app/llm`      | OpenAI erişimi, timeout, retry, structured output sınırları                                |
+| `app/llm`      | LangChain `ChatOpenAI`, retry, `with_structured_output` ile Pydantic şemalar              |
 | `app/schemas`  | Pydantic modelleri                                                                       |
 | `app/core`     | Ortam değişkenleri, loglama, uygulama ayarları                                           |
 
@@ -609,9 +609,9 @@ Otomatik test klasörü yok; kalite bu iki komuta dayanır (`lint`: stil ve bari
 
 Problem düz bir chain değil; fan-out, fan-in ve refine döngüsü graph ile ifade edilince okunur ve değiştirmesi kolay kalır.
 
-### OpenAI SDK ve Pydantic
+### LangChain ChatOpenAI ve Pydantic
 
-Ekstra chain framework’ü yerine ince bir katman: veri akışı görünür, structured output sınırı net, bağımlılık yüzeyi küçük. Karşılığında bazı kolaylıklar elle yazılır; küçük–orta orchestration servisleri için genelde sürdürülebilir bir denge.
+LLM çağrıları `langchain-openai` içindeki `ChatOpenAI` üzerinden; yapılandırılmış çıktı `with_structured_output`, düz metin `ainvoke` ile. Retry mantığı `LLMProvider` içinde (tenacity). Testte `BaseChatModel` inject edilebilir.
 
 ### Evaluator–refiner döngüsü
 

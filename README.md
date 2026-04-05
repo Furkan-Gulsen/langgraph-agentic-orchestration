@@ -213,7 +213,7 @@ The codebase is organized into these directories:
 | `app/services` | Runs the graph, maps results to the API response model                                  |
 | `app/graph`    | LangGraph nodes, state definition, conditional edges                                     |
 | `app/agents`   | Orchestrator, worker, aggregator, evaluator, optimizer calls and prompts                 |
-| `app/llm`      | OpenAI access, timeouts, retries, structured output boundaries                           |
+| `app/llm`      | LangChain `ChatOpenAI`, retries, structured output via `with_structured_output`         |
 | `app/schemas`  | Pydantic models                                                                          |
 | `app/core`     | Environment variables, logging, app settings                                             |
 
@@ -609,9 +609,9 @@ There is no automated test suite yet; quality relies on these two commands (`lin
 
 The problem is not a plain chain; fan-out, fan-in, and a refine loop read and evolve more clearly as a graph.
 
-### OpenAI SDK and Pydantic
+### LangChain ChatOpenAI and Pydantic
 
-A thin layer instead of an extra chain framework: data flow stays visible, structured output boundaries stay clear, dependency surface stays small. Some conveniences are hand-written; for small-to-medium orchestration services that trade-off is usually sustainable.
+LLM calls go through LangChain’s `ChatOpenAI` (`langchain-openai`) with `with_structured_output` for Pydantic schemas and plain `ainvoke` for text. Retries stay in our `LLMProvider` (tenacity). You can inject any `BaseChatModel` for tests.
 
 ### Evaluator–refiner loop
 
