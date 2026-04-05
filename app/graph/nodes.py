@@ -41,6 +41,14 @@ def _resolve_model(state: GraphState, settings: Settings) -> str:
     return state.get("model_name") or settings.openai_model
 
 
+def _current_draft_text(state: GraphState) -> str:
+    """Latest narrative for evaluate/refine: optimizer output if any, else aggregate draft."""
+    improved = state.get("improved_answer")
+    if improved:
+        return str(improved)
+    return str(state.get("draft_answer") or "")
+
+
 async def orchestrate_node(
     state: GraphState,
     *,
@@ -230,7 +238,7 @@ async def evaluate_node(
     _, finish = _timed("evaluate")
     trace_id = state.get("trace_id")
     user_query = state["user_query"]
-    draft = state.get("draft_answer") or ""
+    draft = _current_draft_text(state)
     model = _resolve_model(state, settings)
     try:
         evaluation = await run_evaluator(
@@ -265,7 +273,7 @@ async def refine_node(
     _, finish = _timed("refine")
     trace_id = state.get("trace_id")
     user_query = state["user_query"]
-    draft = state.get("draft_answer") or ""
+    draft = _current_draft_text(state)
     evaluation = state.get("evaluation")
     model = _resolve_model(state, settings)
     iteration = int(state.get("refinement_iteration") or 0)
@@ -296,7 +304,6 @@ async def refine_node(
             trace_id=trace_id,
         )
         return {
-            "draft_answer": refined.revised_answer,
             "improved_answer": refined.revised_answer,
             "refinement_iteration": iteration + 1,
             "node_timings_ms": finish(),
@@ -353,6 +360,6 @@ def route_after_evaluate(state: GraphState) -> object:
         return END
     max_loops = int(state.get("max_refinement_loops") or 0)
     iteration = int(state.get("refinement_iteration") or 0)
-    if ev.should_refine and iteration < max_loops:
+    if ev.should_refine and max_loops > 0 and iteration < max_loops:
         return "refine"
     return END
